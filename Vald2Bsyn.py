@@ -18,24 +18,6 @@ def vald2bsyn():
     pass
 
 
-def checkinput(arguments):
-    """
-    We verify that the three mandatory parameters have been provided.
-    If not, then we ask for the missing ones
-    """
-    argdict = vars(arguments)
-    print('1 args : {0}'.format(argdict))
-    for k, v in list(argdict.items()):
-        print('{0} : {1}'.format(k, v))
-        if v is None:
-            print('Missing parameters {0}'.format(k))
-            var = input("Please enter something: ")
-            argdict[v] = str(var)
-    print('args : {0}'.format(argdict))
-
-    print('parameters: {0}'.format(len(sys.argv)))
-    if len(sys.argv) != 7:
-        print('too few parameters: {0}'.format(len(sys.argv)))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='Vald2Bsyn')
@@ -60,5 +42,4 @@ if __name__ == "__main__":
     )
     arguments = parser.parse_args()
 
-    checkinput(arguments)
     vald2bsyn()
