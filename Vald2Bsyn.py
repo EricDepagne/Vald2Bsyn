@@ -59,13 +59,27 @@ def readvald(valdfile):
 
 def identify(data):
     # The information lies at the end of each fourth line.
+    # isotoperegex = re.compile('\(?P<ion1>([0-9]+)\)(?P<atom1>[A-Za-z]+)(\(?P<ion2>([0-9]+)\)(?P<atom2>[A-Za-z]+))?')
     isotoperegex = re.compile('\(([0-9]+)\)([A-Za-z]+)(\(([0-9]+)\)([A-Za-z]+))?')
-    for l in data[3::4]:
-        element = l[-16:-1]
-        print('Élément : {0}'.format(element))
-        if '(' in element:
-            print('Isotopes')
-    return isotoperegex
+    elt = ''
+    for l in data:
+        found = isotoperegex.search(l)
+        linelength = len(l)
+        if found:
+            # This is a molecule with isotopes
+            elt = found.groups()
+            # We need to filter the output a litte.
+            if None in elt:
+                elt = [x for x in filter(None, elt)]
+            else:
+                elt = [elt[0], elt[1], elt[-2], elt[-1]]
+            print('Molecule : {0}'.format(elt))
+        else:  # It's a single element
+            if linelength == 160:
+                elt = l[-16:-12]
+                print('Élement : {0}'.format(elt))
+        elt = ''
+    return found
 
 
 if __name__ == "__main__":
