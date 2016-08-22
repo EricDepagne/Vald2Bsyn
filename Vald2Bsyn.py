@@ -66,7 +66,7 @@ def identify(data):
         found = isotoperegex.search(l)
         linelength = len(l)
         if found:
-            # This is a molecule with isotopes
+            # This is a molecule with isotopes: We regexp.
             elt = found.groups()
             # We need to filter the output a litte.
             if None in elt:
