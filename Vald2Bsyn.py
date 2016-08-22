@@ -4,6 +4,7 @@
 # Python imports
 import sys
 import argparse
+import re
 
 # import datetime
 
@@ -39,29 +40,32 @@ second_ionisation_potential = [
 def vald2bsyn():
     # First, we read the VALD file.
     valddata = readvald(arguments.valdfile)
+    identifiedlines = identify(valddata)
 
 
 def readvald(valdfile):
     with open(valdfile, 'r') as f:
         linedata = []
-        index = 1
         for line in f:
             # Let's filter first all lines in the file that are not line data. These lines do not start with a single quote
             if not line.startswith(("'")):
-                print('header {0}'.format(line))
+                # This is not some line data, skipping.
                 continue
-            # We are now reading the details of each line. Information is spread over 3 lines.
-            print('index : {0}'.format(index % 3))
-            if index < 3: 
-                # print(linedata)
-                linedata.append(line)
-                index += 1
-            else:
-                index = 0
-        print(linedata)
-
+            # Everything else is part of the line list
+            linedata.append(line)
 
     return linedata
+
+
+def identify(data):
+    # The information lies at the end of each fourth line.
+    isotoperegex = re.compile('\(([0-9]+)\)([A-Za-z]+)(\(([0-9]+)\)([A-Za-z]+))?')
+    for l in data[3::4]:
+        element = l[-16:-1]
+        print('Élément : {0}'.format(element))
+        if '(' in element:
+            print('Isotopes')
+    return isotoperegex
 
 
 if __name__ == "__main__":
