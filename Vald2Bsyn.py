@@ -49,7 +49,6 @@ def readvald(valdfile):
         for line in f:
             # Let's filter first all lines in the file that are not line data. These lines do not start with a single quote
             if not line.startswith(("'")):
-                # This is not some line data, skipping.
                 continue
             # Everything else is part of the line list
             linedata.append(line)
