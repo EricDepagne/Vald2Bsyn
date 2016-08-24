@@ -49,7 +49,6 @@ periodic_table = [
         'Pa', 'U ']
 
 
-
 def vald2bsyn():
     # First, we read the VALD file.
     valddata = readvald(arguments.valdfile)
@@ -74,8 +73,45 @@ def identify(data):
     # The information lies at the end of each fourth line.
     # isotoperegex = re.compile('\(?P<ion1>([0-9]+)\)(?P<atom1>[A-Za-z]+)(\(?P<ion2>([0-9]+)\)(?P<atom2>[A-Za-z]+))?')
     isotoperegex = re.compile('\(([0-9]+)\)([A-Za-z]+)(\(([0-9]+)\)([A-Za-z]+))?')
-    i = 0
-    return found
+    result = {}
+    for index in range(len(data)//4):
+        # We read the lines four by four
+        lineinfo = data[4*index:4*index+4]
+        isotopes = isotoperegex.search(lineinfo[3])
+        elements = None
+        if isotopes:
+            elements = isotopes.groups()
+        if elements:
+            # We're going to translate the VALD format for isotopes into the BSyn format
+            # (12)C(14)N will be 607.012014
+            # print('Elements : {0}'.format(elements))
+            ion1 = elements[0].zfill(3)
+            if elements[3]:
+                ion2 = elements[3].zfill(3)
+            else:
+                ion2 = '000'
+            print('ion1 {0}, ion2 {1}'.format(ion1, ion2))
+        # Now we get the elements involved. It's the first field before the comma in the first line.
+        compound, wavelength, loggf, elow, jlow, eup, jup, lowerlevel, upperlevel, mean, radius, stark, VdW, *rest = lineinfo[0].split(',')
+        # Using the usual capital I and II to indicate the ionisation state.
+        if compound[-2] == '1':
+            ionisation_stage = 1
+            compound = compound.replace('1', 'I')
+        if compound[-2] == '2':
+            ionisation_stage = 2
+            compound = compound.replace('2', 'II')
+        compound = compound.replace("'", "")
+
+        print('compounds : {0}, wavelength {1}'.format(compound, wavelength))
+        if compound not in result.keys():
+            result[compound] = []
+        else:
+            datastring = wavelength+elow+loggf
+            result[compound].append(datastring)
+
+        # print('Isotopes : {0}, élement : {1}'.format(elements, compound))
+        # print('\nlineinfo : {0}'.format(lineinfo[3]))
+    return result
 
 
 if __name__ == "__main__":
