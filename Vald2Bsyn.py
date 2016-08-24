@@ -36,6 +36,19 @@ second_ionisation_potential = [
         15.03, 16.68, 19.00, 20.00, 21.00, 22.00, 10.14, 12.10, 11.50,
         99.99, 12.00]
 
+periodic_table = [
+        'H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
+        'Na', 'Mg', 'Al', 'Si', 'P ', 'S ', 'Cl', 'Ar', 'K ', 'Ca',
+        'Sc', 'Ti', 'V ', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn',
+        'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y ', 'Zr',
+        'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn',
+        'Sb', 'Te', 'I ', 'Xe', 'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd',
+        'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb',
+        'Lu', 'Hf', 'Ta', 'W ', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg',
+        'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th',
+        'Pa', 'U ']
+
+
 
 def vald2bsyn():
     # First, we read the VALD file.
@@ -61,56 +74,7 @@ def identify(data):
     # The information lies at the end of each fourth line.
     # isotoperegex = re.compile('\(?P<ion1>([0-9]+)\)(?P<atom1>[A-Za-z]+)(\(?P<ion2>([0-9]+)\)(?P<atom2>[A-Za-z]+))?')
     isotoperegex = re.compile('\(([0-9]+)\)([A-Za-z]+)(\(([0-9]+)\)([A-Za-z]+))?')
-    elt = ''
     i = 0
-    # We read the file containing the periodic table, to get atomic numbers from names
-    periodictable = np.genfromtxt('elementlist.csv', dtype=None, delimiter=',')
-    for l in data:
-        found = isotoperegex.search(l)
-        linelength = len(l)
-        if found:
-            # This is a compound with isotopes:
-            components = found.groups()
-            print('\n')
-            print('components :{0}'.format(components))
-            # We need to filter the output a little.
-            if None in components:
-                # it's a compound with only one isotope.
-                massnumber = components[0]
-                if components[1].upper() == components[1]:
-                    # It's a compound with two atoms with a single character, like OH
-                    firstatom = components[1][0]
-                    secondatom = components[1][1]
-                elif len(components[1]) > 2:
-                    # It's a multi atom compound
-                    firstatom = components[1][:2]
-                    secondatom = components[1][2]
-                else:
-                    # It's an isotope
-                    firstatom = components[1]
-                    secondatom = None
-                print('mass number : {0}, atom1 :{1}, atom2 : {2}'.format(massnumber, firstatom, secondatom))
-            else:
-                # it's a compound with two different isotopes
-                massnumber1 = components[0]
-                firstatom = components[1]
-                massnumber2 = components[3]
-                secondatom = components[4]
-
-                print('Compound 1 : {0} {1}, compound 2 : {2} {3}'.format(massnumber1, firstatom, massnumber2, secondatom))
-
-            # zprint('Molecule : {0} {1}'.format(elt, i+1))
-        else:  # It's a single element
-            if linelength == 160:
-                atom = l[-16:-12]
-                print('Élement : {0} {1}'.format(atom, i+1))
-        # We have the elements, we need the numbers.
-        if isinstance(elt, list):
-            # We have a molecule.
-            atoms = components[1::2]
-            print('atoms : {0}'.format(atoms))
-        elt = ''
-        i += 1
     return found
 
 
