@@ -78,7 +78,7 @@ def identify(data):
         # We read the lines four by four
         lineinfo = data[4*index:4*index+4]
         isotopes = isotoperegex.search(lineinfo[3])
-        levels = identify_levels(lineinfo[1:3])
+        lowerorbital, upperorbital, comment= identify_levels(lineinfo[1:3])
         elements = None
         if isotopes:
             elements = isotopes.groups()
@@ -104,11 +104,10 @@ def identify(data):
         compound = compound.replace("'", "")
 
         print('compounds : {0}, wavelength {1}'.format(compound, wavelength))
+        datastring = wavelength+elow+loggf+" '"+str(lowerorbital)+"'"+' '+"'"+str(upperorbital)+"'" + " '"+str(compound + ' '+ comment)
         if compound not in result.keys():
             result[compound] = []
-        else:
-            datastring = wavelength+elow+loggf+levels[0]+levels[1]
-            result[compound].append(datastring)
+        result[compound].append(datastring)
 
         # print('Isotopes : {0}, élement : {1}'.format(elements, compound))
         # print('\nlineinfo : {0}'.format(lineinfo[3]))
@@ -121,7 +120,6 @@ def extract_atomic_data(data):
     Returns a list containing either the information if found or None.
 
     """
-    members = [None, None, None]
     # First try, we assume the line contains all the information, and we can find the three chunks we're looking for.
     try:
         pattern = re.compile("'\s*(\S*)\s+(\S+)\s+(\S*)'")
@@ -145,13 +143,18 @@ def extract_atomic_data(data):
                 members = result.groups()
             except AttributeError:
                 pass
+    # Working with a list will allow to change inplace elements of the pattern search
+    print('members : {0}'.format(members))
+    members = list(members)
+    while len(members) != 3 :
+        members.append('None')
 
     return members
 
 def get_orbital(configuration):
-    orbits = 'spdfghklmn'
-    print(configuration)
-    if configuration is None:
+    orbits = 'spdfghklm'
+    print('Get_Orbital: {0}'.format(configuration))
+    if 'None' in configuration  :
         return 'X'
     for c in configuration[::-1]:
         if c.islower() and c in orbits:
@@ -166,11 +169,31 @@ def identify_levels(info):
 
     #print('info: {0}\n{1}'.format(lower_level_atomic_info, upper_level_atomic_info))
     # We extract the orbitals from the atomic configuration.
-    upper_orbital = get_orbital(upper_level_atomic_info[1])
-    lower_orbital = get_orbital(lower_level_atomic_info[1])
-    #print('Niveaux. Lower :{0} Upper {1}'.format(lower_orbital, upper_orbital))
-    #print('------------')
-    return [lower_orbital, upper_orbital]
+    # print(lower_level_atomic_info)
+    # print(upper_level_atomic_info)
+    try:
+        upper_orbital = get_orbital(upper_level_atomic_info[1])
+    except IndexError:
+        upper_orbital = 'X'
+    try:
+        lower_orbital = get_orbital(lower_level_atomic_info[1])
+    except IndexError:
+        lower_orbital = 'X'
+    print('Niveaux. Lower :{0} Upper {1}'.format(lower_orbital, upper_orbital))
+    print('------------')
+    # We also create the comment part of the line that goes into the BSyn format.
+    if lower_level_atomic_info[0]:
+        comment1 = str(lower_level_atomic_info[0])
+    else:
+        comment1 = '--'
+    if upper_level_atomic_info[0]:
+        comment3 = str(upper_level_atomic_info[0])
+    else:
+        comment3 = '--'
+
+    comment =  comment1+ ':' + str(lower_level_atomic_info[1]) + ' ' + comment3 + ':' + str(upper_level_atomic_info[1])
+    print('comment :{0}'.format(comment))
+    return [lower_orbital, upper_orbital, comment]
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='Vald2Bsyn')
