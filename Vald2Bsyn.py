@@ -48,6 +48,8 @@ periodic_table = [
         'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th',
         'Pa', 'U ']
 
+gamma = {
+
 
 def vald2bsyn():
     # First, we read the VALD file.
@@ -93,7 +95,8 @@ def identify(data):
                 ion2 = '000'
             #print('ion1 {0}, ion2 {1}'.format(ion1, ion2))
         # Now we get the elements involved. It's the first field before the comma in the first line.
-        compound, wavelength, loggf, elow, jlow, eup, jup, lowerlevel, upperlevel, mean, radius, stark, VdW, *rest = lineinfo[0].split(',')
+        compound, wavelength, loggf, elow, jlow, eup, jup, lowerlevel, upperlevel, mean, radius, stark, vdw, *rest = lineinfo[0].split(',')
+        jup = np.float(jup)
         # Using the usual capital I and II to indicate the ionisation state.
         if compound[-2] == '1':
             ionisation_stage = 1
@@ -103,8 +106,9 @@ def identify(data):
             compound = compound.replace('2', 'II')
         compound = compound.replace("'", "")
 
-        print('compounds : {0}, wavelength {1}'.format(compound, wavelength))
-        datastring = wavelength+elow+loggf+" '"+str(lowerorbital)+"'"+' '+"'"+str(upperorbital)+"'" + " '"+str(compound + ' '+ comment)
+        print('compounds : {0}, wavelength {1} rjup {2}'.format(compound, wavelength, 2*jup+1))
+        if vdw 
+        datastring = wavelength+elow+loggf+' '+str(2*jup+1)+" '"+str(lowerorbital)+"'"+' '+"'"+str(upperorbital)+"'" + " '"+str(compound + ' '+ comment)
         if compound not in result.keys():
             result[compound] = []
         result[compound].append(datastring)
@@ -120,6 +124,14 @@ def extract_atomic_data(data):
     Returns a list containing either the information if found or None.
 
     """
+    # Doing a bit of cleanup first. There might be some undesirable characters, that we do not need here.
+    # There may be a space in the string, with a \ before to protect it.
+    # Let's get rid of it, we don't need it.
+    if '\\' in data:
+        data = data.replace("\\ ", ".")
+    if '?' in data:
+        data = data.replace('?', '')
+
     # First try, we assume the line contains all the information, and we can find the three chunks we're looking for.
     try:
         pattern = re.compile("'\s*(\S*)\s+(\S+)\s+(\S*)'")
@@ -144,7 +156,7 @@ def extract_atomic_data(data):
             except AttributeError:
                 pass
     # Working with a list will allow to change inplace elements of the pattern search
-    print('members : {0}'.format(members))
+    # print('members : {0}'.format(members))
     members = list(members)
     while len(members) != 3 :
         members.append('None')
@@ -153,7 +165,7 @@ def extract_atomic_data(data):
 
 def get_orbital(configuration):
     orbits = 'spdfghklm'
-    print('Get_Orbital: {0}'.format(configuration))
+    #print('Get_Orbital: {0}'.format(configuration))
     if 'None' in configuration  :
         return 'X'
     for c in configuration[::-1]:
@@ -179,7 +191,7 @@ def identify_levels(info):
         lower_orbital = get_orbital(lower_level_atomic_info[1])
     except IndexError:
         lower_orbital = 'X'
-    print('Niveaux. Lower :{0} Upper {1}'.format(lower_orbital, upper_orbital))
+    #print('Niveaux. Lower :{0} Upper {1}'.format(lower_orbital, upper_orbital))
     print('------------')
     # We also create the comment part of the line that goes into the BSyn format.
     if lower_level_atomic_info[0]:
