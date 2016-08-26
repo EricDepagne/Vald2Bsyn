@@ -90,6 +90,8 @@ def identify(data):
     for index in range(len(data)//4):
         # We read the lines four by four
         lineinfo = data[4*index:4*index+4]
+        if '**'in lineinfo[0]:
+            continue
         isotopes = isotoperegex.search(lineinfo[3])
         lowerorbital, upperorbital, comment = identify_levels(lineinfo[1:3])
         elements = None
@@ -111,6 +113,8 @@ def identify(data):
         jup = np.float(jup)
         vdw = np.float(vdw)
         gamrad = np.float(gamrad)
+        wavelength = np.float(wavelength)
+        elow = np.float(elow)
         # Using the usual capital I and II to indicate the ionisation state.
         if compound[-2] == '1':
             ionisation_stage = 1
@@ -142,9 +146,12 @@ def identify(data):
             gamrad = 10**gamrad
         else:
             gamrad = 10**5
+        wavelength = "{0:.3f}".format(wavelength)
+        gamrad = "{0:.2E}".format(gamrad)
+        vdw = "{0:.3f}".format(vdw)
+        elow ="{0:.3f}".format(elow)
 
-
-        datastring = wavelength+elow+loggf+' '+str(vdw)+' '+str(2*jup+1)+' ' + str(gamrad) + ' ' + " '"+str(lowerorbital)+"'"+' '+"'"+str(upperorbital)+"'" + " '"+str(compound + ' ' + comment)
+        datastring = str(wavelength)+' ' + str(elow)+loggf+' '+str(vdw)+' '+str(2*jup+1)+' ' + str(gamrad) + ' ' + " '"+str(lowerorbital)+"'"+' '+"'"+str(upperorbital)+"'" + " '"+str(compound + ' ' + comment)
         if compound not in result.keys():
             result[compound] = []
         result[compound].append(datastring)
