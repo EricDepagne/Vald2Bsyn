@@ -48,7 +48,18 @@ periodic_table = [
         'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th',
         'Pa', 'U ']
 
-gamma = {
+gamma = {'1': {
+                'Ca': 1.4,
+                'Sr': 1.8,
+                'Ba': 3.0,
+            },
+         '2': {
+                'Na': 2.0,
+                'Si': 1.3,
+                'Ca': 1.8,
+                'Fe': 1.4,
+            }
+         }
 
 
 def vald2bsyn():
@@ -80,35 +91,60 @@ def identify(data):
         # We read the lines four by four
         lineinfo = data[4*index:4*index+4]
         isotopes = isotoperegex.search(lineinfo[3])
-        lowerorbital, upperorbital, comment= identify_levels(lineinfo[1:3])
+        lowerorbital, upperorbital, comment = identify_levels(lineinfo[1:3])
         elements = None
         if isotopes:
             elements = isotopes.groups()
         if elements:
             # We're going to translate the VALD format for isotopes into the BSyn format
             # (12)C(14)N will be 607.012014
+            # (42)Ca will be 20.042
             # print('Elements : {0}'.format(elements))
             ion1 = elements[0].zfill(3)
             if elements[3]:
                 ion2 = elements[3].zfill(3)
             else:
                 ion2 = '000'
-            #print('ion1 {0}, ion2 {1}'.format(ion1, ion2))
+            print('ion1 {0}, ion2 {1}'.format(ion1, ion2))
         # Now we get the elements involved. It's the first field before the comma in the first line.
-        compound, wavelength, loggf, elow, jlow, eup, jup, lowerlevel, upperlevel, mean, radius, stark, vdw, *rest = lineinfo[0].split(',')
+        compound, wavelength, loggf, elow, jlow, eup, jup, lowerlevel, upperlevel, mean, gamrad, stark, vdw, *rest = lineinfo[0].split(',')
         jup = np.float(jup)
+        vdw = np.float(vdw)
+        gamrad = np.float(gamrad)
         # Using the usual capital I and II to indicate the ionisation state.
         if compound[-2] == '1':
             ionisation_stage = 1
             compound = compound.replace('1', 'I')
-        if compound[-2] == '2':
+        elif compound[-2] == '2':
             ionisation_stage = 2
             compound = compound.replace('2', 'II')
+        else:
+            ionisation_stage = 3
         compound = compound.replace("'", "")
 
-        print('compounds : {0}, wavelength {1} rjup {2}'.format(compound, wavelength, 2*jup+1))
-        if vdw 
-        datastring = wavelength+elow+loggf+' '+str(2*jup+1)+" '"+str(lowerorbital)+"'"+' '+"'"+str(upperorbital)+"'" + " '"+str(compound + ' '+ comment)
+        # print('compounds : {0} '.format(compound))
+        if vdw == 0:
+            # Van der Waals damping not provided by VALD. We'll use default values.
+            # The elements are either isotopes or compounds.
+            # By default, vdw is 2.5
+            vdw = 2.5
+            atom = compound.split(' ')[0]
+            if atom in periodic_table:
+                # We only modify ionisation stage 1 and 2 and for a few atoms.
+                if ionisation_stage < 3:
+                    print('données : {0} is : {1}'.format(gamma[str(ionisation_stage)], atom))
+                    try:
+                        print('gamma : {0} {1} {2}'.format(vdw, ionisation_stage, atom))
+                        vdw = gamma[str(ionisation_stage)][str(atom)]
+                    except KeyError:
+                        print('no key')
+        if gamrad > 3.0:
+            gamrad = 10**gamrad
+        else:
+            gamrad = 10**5
+
+
+        datastring = wavelength+elow+loggf+' '+str(vdw)+' '+str(2*jup+1)+' ' + str(gamrad) + ' ' + " '"+str(lowerorbital)+"'"+' '+"'"+str(upperorbital)+"'" + " '"+str(compound + ' ' + comment)
         if compound not in result.keys():
             result[compound] = []
         result[compound].append(datastring)
@@ -116,6 +152,7 @@ def identify(data):
         # print('Isotopes : {0}, élement : {1}'.format(elements, compound))
         # print('\nlineinfo : {0}'.format(lineinfo[3]))
     return result
+
 
 def extract_atomic_data(data):
     """
@@ -158,15 +195,16 @@ def extract_atomic_data(data):
     # Working with a list will allow to change inplace elements of the pattern search
     # print('members : {0}'.format(members))
     members = list(members)
-    while len(members) != 3 :
+    while len(members) != 3:
         members.append('None')
 
     return members
 
+
 def get_orbital(configuration):
     orbits = 'spdfghklm'
-    #print('Get_Orbital: {0}'.format(configuration))
-    if 'None' in configuration  :
+    # print('Get_Orbital: {0}'.format(configuration))
+    if 'None' in configuration:
         return 'X'
     for c in configuration[::-1]:
         if c.islower() and c in orbits:
@@ -179,7 +217,7 @@ def identify_levels(info):
     lower_level_atomic_info = extract_atomic_data(lowerlevelinfo)
     upper_level_atomic_info = extract_atomic_data(upperlevelinfo)
 
-    #print('info: {0}\n{1}'.format(lower_level_atomic_info, upper_level_atomic_info))
+    # print('info: {0}\n{1}'.format(lower_level_atomic_info, upper_level_atomic_info))
     # We extract the orbitals from the atomic configuration.
     # print(lower_level_atomic_info)
     # print(upper_level_atomic_info)
@@ -191,8 +229,8 @@ def identify_levels(info):
         lower_orbital = get_orbital(lower_level_atomic_info[1])
     except IndexError:
         lower_orbital = 'X'
-    #print('Niveaux. Lower :{0} Upper {1}'.format(lower_orbital, upper_orbital))
-    print('------------')
+    # print('Niveaux. Lower :{0} Upper {1}'.format(lower_orbital, upper_orbital))
+    # print('------------')
     # We also create the comment part of the line that goes into the BSyn format.
     if lower_level_atomic_info[0]:
         comment1 = str(lower_level_atomic_info[0])
@@ -203,8 +241,8 @@ def identify_levels(info):
     else:
         comment3 = '--'
 
-    comment =  comment1+ ':' + str(lower_level_atomic_info[1]) + ' ' + comment3 + ':' + str(upper_level_atomic_info[1])
-    print('comment :{0}'.format(comment))
+    comment = comment1 + ':' + str(lower_level_atomic_info[1]) + ' ' + comment3 + ':' + str(upper_level_atomic_info[1])
+    # print('comment :{0}'.format(comment))
     return [lower_orbital, upper_orbital, comment]
 
 if __name__ == "__main__":
