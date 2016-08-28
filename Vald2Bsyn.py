@@ -38,7 +38,7 @@ second_ionisation_potential = [
 
 periodic_table = [
         'H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
-        'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K ', 'Ca',
+        'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca',
         'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn',
         'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr',
         'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn',
@@ -84,7 +84,6 @@ def readvald(valdfile):
 
 def identify(data):
     # The information lies at the end of each fourth line.
-    # isotoperegex = re.compile('\(?P<ion1>([0-9]+)\)(?P<atom1>[A-Za-z]+)(\(?P<ion2>([0-9]+)\)(?P<atom2>[A-Za-z]+))?')
     isotoperegex = re.compile('\(([0-9]+)\)([A-Za-z]+)(\(([0-9]+)\)([A-Za-z]+))?')
     result = {}
     for index in range(len(data)//4):
@@ -98,17 +97,6 @@ def identify(data):
         elements = None
         if isotopes:
             elements = isotopes.groups()
-        if elements:
-            # We're going to translate the VALD format for isotopes into the BSyn format
-            # (12)C(14)N will be 607.012014
-            # (42)Ca will be 20.042
-            # print('Elements : {0}'.format(elements))
-            ion1 = elements[0].zfill(3)
-            if elements[3]:
-                ion2 = elements[3].zfill(3)
-            else:
-                ion2 = '000'
-            print('ion1 {0}, ion2 {1}'.format(ion1, ion2))
         # Now we get the elements involved. It's the first field before the comma in the first line.
         compound, wavelength, loggf, elow, jlow, eup, jup, lowerlevel, upperlevel, mean, gamrad, stark, vdw, *rest = lineinfo[0].split(',')
         jup = np.float(jup)
@@ -117,16 +105,17 @@ def identify(data):
         wavelength = np.float(wavelength)
         elow = np.float(elow)
         # Using the usual capital I and II to indicate the ionisation state.
-        if compound[-2] == '1':
-            ionisation_stage = 1
-            compound = compound.replace('1', 'I')
-        elif compound[-2] == '2':
-            ionisation_stage = 2
-            compound = compound.replace('2', 'II')
-        else:
-            ionisation_stage = 3
+#        if compound[-2] == '1':
+#            ionisation_stage = 1
+#            compound = compound.replace('1', 'I')
+#        elif compound[-2] == '2':
+#            ionisation_stage = 2
+#            compound = compound.replace('2', 'II')
+#        else:
+#            ionisation_stage = 3
         compound = compound.replace("'", "")
-        build_identification(compound, elements)
+        ID, ionisation_stage = build_identification(compound, elements)
+        print ('ID : {0}, ionisation : {1}'.format(ID, ionisation_stage))
 
         # print('compounds : {0} '.format(compound))
         if vdw == 0:
@@ -137,13 +126,14 @@ def identify(data):
             atom = compound.split(' ')[0]
             if atom in periodic_table:
                 # We only modify ionisation stage 1 and 2 and for a few atoms.
-                if ionisation_stage < 3:
-                    print('données : {0} is : {1}'.format(gamma[str(ionisation_stage)], atom))
+                if np.float(ionisation_stage) < 3:
+                    # print('données : {0} is : {1}'.format(gamma[str(ionisation_stage)], atom))
                     try:
-                        print('gamma : {0} {1} {2}'.format(vdw, ionisation_stage, atom))
+                        # print('gamma : {0} {1} {2}'.format(vdw, ionisation_stage, atom))
                         vdw = gamma[str(ionisation_stage)][str(atom)]
                     except KeyError:
-                        print('no key')
+                        pass
+                        # print('no key')
         if gamrad > 3.0:
             gamrad = 10**gamrad
         else:
@@ -240,18 +230,60 @@ def build_identification(compound, elements):
     """
     print('------')
     print('compound : {0}\nDetails : {1}'.format(compound, elements))
+    ionisation_translation = {
+            'I':    '1',
+            'II':   '2',
+            'III':  '3'
+                            }
+    ID = ''
+    atom, ionisation = compound.split(' ')
     if not elements:
         print('No isotopes for this line of element {0}'.format(compound))
-        atom, ionisation = compound.split(' ')
         first_mass = '  '
         second_mass = str(periodic_table.index(atom)+1)
-        ID = first_mass + second_mass + ' ' + str(ionisation)
+        try:
+            ion_state_1 = ionisation_translation[ionisation]
+        except KeyError:
+            ion_state_1 = ''
+        ID = first_mass + second_mass + '.000' 
+
     else:
-        pass
+        # compound with isotopes.
+        elts = list((elements))
+        if elements[3]:
+            # print('Two isotopes : {0} and {1}'.format(elts[:2], elts[3:]))
+            first_mass = '{0:2d}'.format(periodic_table.index(elts[1])+1)
+            second_mass = '{0:02d}'.format(periodic_table.index(elts[4])+1)
+            ion_state_1 = '{0:03d}'.format(int(elts[0]))
+            ion_state_2 = '{0:03d}'.format(int(elts[3]))
+            ID = str(first_mass) + str(second_mass) + '.' + str(ion_state_1) + str(ion_state_2)
+        else:
+            # We have now the following possibilities:
+            # one isotope, such as 6Li or
+            # one molecule with either H and another atom (CH, MgH, aso.) or
+            # one molecule with only one isotope, as  (48)TiO
+            if elts[1] in periodic_table:
+                first_mass = '{0:2d}'.format(periodic_table.index(elts[1])+1)
+                ion_state_1 = '{0:03d}'.format(int(elts[0]))
+                ID = str(first_mass) + '.' + str(ion_state_1)
+            elif elts[1][-1] == 'H':
+                first_mass = '{0:02d}'.format(periodic_table.index(elts[1][:-1])+1)
+                ion_state_1 = '{0:03d}'.format(int(elts[0]))
+                second_mass = '{0:2d}'.format(periodic_table.index('H')+1)
+                ion_state_2 = '000'
+                ID = str(second_mass) + str(first_mass) + '.' + str(ion_state_2) + str(ion_state_1)
+            else:
+                # It's something like  TiO.
+                print('elt : {0}'.format(elts[1]))
+                first_mass = '{0:02d}'.format(periodic_table.index(elts[1][:2])+1)
+                ion_state_1 = '{0:03d}'.format(int(elts[0]))
+                second_mass = '{0:2d}'.format(periodic_table.index(elts[1][2:])+1)
+                ion_state_2 = '000'
 
+                ID = str(second_mass) + str(first_mass) + '.' + str(ion_state_2) + str(ion_state_1)
 
-
-    print('ID : {0}'.format(ID))
+    # print('ID : {0}'.format(ID))
+    return (ID, ionisation)
 
 
 def get_orbital(configuration):
