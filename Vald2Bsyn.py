@@ -38,15 +38,15 @@ second_ionisation_potential = [
 
 periodic_table = [
         'H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
-        'Na', 'Mg', 'Al', 'Si', 'P ', 'S ', 'Cl', 'Ar', 'K ', 'Ca',
-        'Sc', 'Ti', 'V ', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn',
-        'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y ', 'Zr',
+        'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K ', 'Ca',
+        'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn',
+        'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr',
         'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn',
-        'Sb', 'Te', 'I ', 'Xe', 'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd',
+        'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd',
         'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb',
-        'Lu', 'Hf', 'Ta', 'W ', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg',
+        'Lu', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg',
         'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th',
-        'Pa', 'U ']
+        'Pa', 'U']
 
 gamma = {'1': {
                 'Ca': 1.4,
@@ -92,6 +92,7 @@ def identify(data):
         lineinfo = data[4*index:4*index+4]
         if '**'in lineinfo[0]:
             continue
+        isotopes = None
         isotopes = isotoperegex.search(lineinfo[3])
         lowerorbital, upperorbital, comment = identify_levels(lineinfo[1:3])
         elements = None
@@ -125,6 +126,7 @@ def identify(data):
         else:
             ionisation_stage = 3
         compound = compound.replace("'", "")
+        build_identification(compound, elements)
 
         # print('compounds : {0} '.format(compound))
         if vdw == 0:
@@ -149,9 +151,25 @@ def identify(data):
         wavelength = "{0:.3f}".format(wavelength)
         gamrad = "{0:.2E}".format(gamrad)
         vdw = "{0:.3f}".format(vdw)
-        elow ="{0:.3f}".format(elow)
+        elow = "{0:.3f}".format(elow)
+        jup = "{0:7s}".format(str(2*jup+1))
+        # Replace the datastring by a dict that will contain all infos.
+# {linenumber : {wavelength,
+#                elow,
+#                loggf,
+#                vdw,
+#                jup,
+#                gamrad,
+#                lower,
+#                upper,
+#                eqw,
+#                eqwerr,
+#                compound,
+#                comment,
+#    }
+# }
 
-        datastring = str(wavelength)+' ' + str(elow)+loggf+' '+str(vdw)+' '+str(2*jup+1)+' ' + str(gamrad) + ' ' + " '"+str(lowerorbital)+"'"+' '+"'"+str(upperorbital)+"'" + " '"+str(compound + ' ' + comment)
+        datastring = str(wavelength)+' ' + str(elow)+loggf+' '+str(vdw)+' '+str(jup)+' ' + str(gamrad) + ' ' + " '"+str(lowerorbital)+"'"+' '+"'"+str(upperorbital)+"'" + " '"+str(compound + ' ' + comment)
         if compound not in result.keys():
             result[compound] = []
         result[compound].append(datastring)
@@ -206,6 +224,34 @@ def extract_atomic_data(data):
         members.append('None')
 
     return members
+
+
+def build_identification(compound, elements):
+    """
+    We build here the identification string for each compound, atom or molecule
+    This identification has the following format:
+    XXYY.WWWZZZ I
+    Where :
+    XX is the atomic mass of the first element. Replaced by two space if only one element
+    ZZ is the atomic mass of the second element
+    WWW is the mass of the first element
+    ZZZ is the mass of the second element
+    I is the ionisation stage of the compound. Equals to 1 for a molecule.
+    """
+    print('------')
+    print('compound : {0}\nDetails : {1}'.format(compound, elements))
+    if not elements:
+        print('No isotopes for this line of element {0}'.format(compound))
+        atom, ionisation = compound.split(' ')
+        first_mass = '  '
+        second_mass = str(periodic_table.index(atom)+1)
+        ID = first_mass + second_mass + ' ' + str(ionisation)
+    else:
+        pass
+
+
+
+    print('ID : {0}'.format(ID))
 
 
 def get_orbital(configuration):
