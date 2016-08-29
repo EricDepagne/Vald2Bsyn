@@ -60,6 +60,18 @@ gamma = {'1': {
                 'Fe': 1.4,
             }
          }
+from_roman = {
+        'I':    '1',
+        'II':   '2',
+        'III':  '3'
+            }
+to_roman = {
+        '1':    'I',
+        '2':    'II',
+        '3':    'III',
+        '4':    'IV',
+        '5':    'V'
+        }
 
 
 def vald2bsyn():
@@ -68,12 +80,29 @@ def vald2bsyn():
     identifiedlines = identify(valddata)
     writebsynfile(identifiedlines, arguments.bsynfile)
 
+
 def writebsynfile(lines, bsynfile):
     print('Writing data to BSyn file : {0}'.format(bsynfile))
-    for k in lines.keys():
-        print('elt: {0} has {1} isotopes'.format(k, len(lines[k])))
-        for subkey in lines[k].keys():
-            print('{0} lines identified for element {1} with isotopic ID {2}'.format(len(lines[k][subkey]), k, subkey))
+    with  open(bsynfile, 'w') as bfile:
+        for k in lines.keys():
+            print('elt: {0} has {1} isotopes'.format(k, len(lines[k])))
+            for subkey in lines[k].keys():
+                print('{0} lines identified for element {1} with isotopic ID {2}'.format(len(lines[k][subkey]), k, subkey))
+                a, i = k.split(' ')
+                subheader = subkey + ' ' + i + ' ' + str(len(lines[k][subkey])) + '\n'
+                print('subheader : {0}'.format(subheader))
+                bfile.write(subheader)
+                try:
+                    element = a + ' ' + to_roman[i] + '\n' 
+                    print('element : {0}'.format(element))
+                    bfile.write(element)
+                except KeyError:
+                    print('no key')
+                    continue
+                for i in range(len(lines[k][subkey])):
+                    bfile.write(lines[k][subkey][i])
+                    bfile.write('\n')
+                    print(lines[k][subkey][i])
 
 
 def readvald(valdfile):
@@ -232,11 +261,6 @@ def build_identification(compound, elements):
     """
     # print('------')
     # print('compound : {0}\nDetails : {1}'.format(compound, elements))
-    ionisation_translation = {
-            'I':    '1',
-            'II':   '2',
-            'III':  '3'
-                            }
     ID = ''
     atom, ionisation = compound.split(' ')
     if not elements:
@@ -244,7 +268,7 @@ def build_identification(compound, elements):
         first_mass = '  '
         second_mass = str(periodic_table.index(atom)+1)
         try:
-            ion_state_1 = ionisation_translation[ionisation]
+            ion_state_1 = from_roman[ionisation]
         except KeyError:
             ion_state_1 = ''
         ID = first_mass + second_mass + '.000'
