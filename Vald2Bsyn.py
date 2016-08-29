@@ -66,6 +66,14 @@ def vald2bsyn():
     # First, we read the VALD file.
     valddata = readvald(arguments.valdfile)
     identifiedlines = identify(valddata)
+    writebsynfile(identifiedlines, arguments.bsynfile)
+
+def writebsynfile(lines, bsynfile):
+    print('Writing data to BSyn file : {0}'.format(bsynfile))
+    for k in lines.keys():
+        print('elt: {0} has {1} isotopes'.format(k, len(lines[k])))
+        for subkey in lines[k].keys():
+            print('{0} lines identified for element {1} with isotopic ID {2}'.format(len(lines[k][subkey]), k, subkey))
 
 
 def readvald(valdfile):
@@ -86,6 +94,8 @@ def identify(data):
     # The information lies at the end of each fourth line.
     isotoperegex = re.compile('\(([0-9]+)\)([A-Za-z]+)(\(([0-9]+)\)([A-Za-z]+))?')
     result = {}
+    eqw = '0.0'
+    eqwerr = '1.0'
     for index in range(len(data)//4):
         # We read the lines four by four
         lineinfo = data[4*index:4*index+4]
@@ -104,18 +114,8 @@ def identify(data):
         gamrad = np.float(gamrad)
         wavelength = np.float(wavelength)
         elow = np.float(elow)
-        # Using the usual capital I and II to indicate the ionisation state.
-#        if compound[-2] == '1':
-#            ionisation_stage = 1
-#            compound = compound.replace('1', 'I')
-#        elif compound[-2] == '2':
-#            ionisation_stage = 2
-#            compound = compound.replace('2', 'II')
-#        else:
-#            ionisation_stage = 3
         compound = compound.replace("'", "")
         ID, ionisation_stage = build_identification(compound, elements)
-        print ('ID : {0}, ionisation : {1}'.format(ID, ionisation_stage))
 
         # print('compounds : {0} '.format(compound))
         if vdw == 0:
@@ -159,10 +159,12 @@ def identify(data):
 #    }
 # }
 
-        datastring = str(wavelength)+' ' + str(elow)+loggf+' '+str(vdw)+' '+str(jup)+' ' + str(gamrad) + ' ' + " '"+str(lowerorbital)+"'"+' '+"'"+str(upperorbital)+"'" + " '"+str(compound + ' ' + comment)
-        if compound not in result.keys():
-            result[compound] = []
-        result[compound].append(datastring)
+        datastring = str(wavelength)+' ' + str(elow)+loggf+' '+str(vdw)+' '+str(jup)+' ' + str(gamrad) + ' ' + " '"+str(lowerorbital)+"'"+' '+"'"+str(upperorbital)+"' " + eqw + ' ' + eqwerr + ' ' + "'" + str(compound + ' ' + comment)
+        if (compound not in result.keys()):
+            result[compound] = {}
+        if (ID not in result[compound].keys()):
+            result[compound][ID] = []
+        result[compound][ID].append(datastring)
 
         # print('Isotopes : {0}, élement : {1}'.format(elements, compound))
         # print('\nlineinfo : {0}'.format(lineinfo[3]))
@@ -228,8 +230,8 @@ def build_identification(compound, elements):
     ZZZ is the mass of the second element
     I is the ionisation stage of the compound. Equals to 1 for a molecule.
     """
-    print('------')
-    print('compound : {0}\nDetails : {1}'.format(compound, elements))
+    # print('------')
+    # print('compound : {0}\nDetails : {1}'.format(compound, elements))
     ionisation_translation = {
             'I':    '1',
             'II':   '2',
@@ -238,14 +240,14 @@ def build_identification(compound, elements):
     ID = ''
     atom, ionisation = compound.split(' ')
     if not elements:
-        print('No isotopes for this line of element {0}'.format(compound))
+        # print('No isotopes for this line of element {0}'.format(compound))
         first_mass = '  '
         second_mass = str(periodic_table.index(atom)+1)
         try:
             ion_state_1 = ionisation_translation[ionisation]
         except KeyError:
             ion_state_1 = ''
-        ID = first_mass + second_mass + '.000' 
+        ID = first_mass + second_mass + '.000'
 
     else:
         # compound with isotopes.
@@ -274,7 +276,6 @@ def build_identification(compound, elements):
                 ID = str(second_mass) + str(first_mass) + '.' + str(ion_state_2) + str(ion_state_1)
             else:
                 # It's something like  TiO.
-                print('elt : {0}'.format(elts[1]))
                 first_mass = '{0:02d}'.format(periodic_table.index(elts[1][:2])+1)
                 ion_state_1 = '{0:03d}'.format(int(elts[0]))
                 second_mass = '{0:2d}'.format(periodic_table.index(elts[1][2:])+1)
@@ -306,14 +307,20 @@ def identify_levels(info):
     # We extract the orbitals from the atomic configuration.
     # print(lower_level_atomic_info)
     # print(upper_level_atomic_info)
-    try:
-        upper_orbital = get_orbital(upper_level_atomic_info[1])
-    except IndexError:
+    if 'Hb' in upper_level_atomic_info:
         upper_orbital = 'X'
-    try:
-        lower_orbital = get_orbital(lower_level_atomic_info[1])
-    except IndexError:
+    else:
+        try:
+            upper_orbital = get_orbital(upper_level_atomic_info[1])
+        except IndexError:
+            upper_orbital = 'X'
+    if 'Hb' in lower_level_atomic_info:
         lower_orbital = 'X'
+    else:
+        try:
+            lower_orbital = get_orbital(lower_level_atomic_info[1])
+        except IndexError:
+            lower_orbital = 'X'
     # print('Niveaux. Lower :{0} Upper {1}'.format(lower_orbital, upper_orbital))
     # print('------------')
     # We also create the comment part of the line that goes into the BSyn format.
