@@ -83,18 +83,33 @@ def vald2bsyn():
 
 def writebsynfile(lines, bsynfile):
     print('Writing data to BSyn file : {0}'.format(bsynfile))
+    # print(lines)
+    atomicnumber = []
+    for k in lines.keys():
+        atomicnumber.append(list(lines[k].keys())[0])
+    # We want to sort the list, so we convert the items to floats, sort them, and rewrite them as string while keeping the format
+    temp = [np.float(x) for x in atomicnumber]  # Convert items to floats
+    temp.sort()  # sort the floats
+    atomicnumber = [str(x).replace('.0', '.000') if str(x).endswith('0') else str(x) for x in temp]  # Rewrite the floats so that they have either 3 trailing zeros or the normal format
+    # print('trié : {0}'.format(atomicnumber))
+
+    # an = [t[:-3] if t.endswith('000') else t for t in atomicnumber]
+    # print(an)
+
     with  open(bsynfile, 'w') as bfile:
         for k in lines.keys():
-            print('elt: {0} has {1} isotopes'.format(k, len(lines[k])))
-            for subkey in lines[k].keys():
-                print('{0} lines identified for element {1} with isotopic ID {2}'.format(len(lines[k][subkey]), k, subkey))
+            # print('elt: {0} has {1} isotopes'.format(k, len(lines[k])))
+            subkeys = list(lines[k].keys())
+            #print('subkey : {0}'.format(subkeys))
+            for subkey in subkeys:
+            #    print('{0} lines identified for element {1} with isotopic ID {2}'.format(len(lines[k][subkey]), k, subkey))
                 a, i = k.split(' ')
                 subheader = subkey + ' ' + i + ' ' + str(len(lines[k][subkey])) + '\n'
-                print('subheader : {0}'.format(subheader))
+             #   print('subheader : {0}'.format(subheader))
                 bfile.write(subheader)
                 try:
-                    element = a + ' ' + to_roman[i] + '\n' 
-                    print('element : {0}'.format(element))
+                    element = a + ' ' + to_roman[i] + '\n'
+                    # print('element : {0}'.format(element))
                     bfile.write(element)
                 except KeyError:
                     print('no key')
@@ -102,7 +117,7 @@ def writebsynfile(lines, bsynfile):
                 for i in range(len(lines[k][subkey])):
                     bfile.write(lines[k][subkey][i])
                     bfile.write('\n')
-                    print(lines[k][subkey][i])
+                    # print(lines[k][subkey][i])
 
 
 def readvald(valdfile):
@@ -357,7 +372,7 @@ def identify_levels(info):
     else:
         comment3 = '--'
 
-    comment = comment1 + ':' + str(lower_level_atomic_info[1]) + ' ' + comment3 + ':' + str(upper_level_atomic_info[1])
+    comment = comment1 + ':' + str(lower_level_atomic_info[1]) + ' ' + comment3 + ':' + str(upper_level_atomic_info[1]) + "'"
     # print('comment :{0}'.format(comment))
     return [lower_orbital, upper_orbital, comment]
 
