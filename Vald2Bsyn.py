@@ -96,19 +96,25 @@ def writebsynfile(lines, bsynfile):
     # an = [t[:-3] if t.endswith('000') else t for t in atomicnumber]
     # print(an)
 
-    with  open(bsynfile, 'w') as bfile:
+    with open(bsynfile, 'w') as bfile:
         for k in lines.keys():
             # print('elt: {0} has {1} isotopes'.format(k, len(lines[k])))
             subkeys = list(lines[k].keys())
-            #print('subkey : {0}'.format(subkeys))
+            # print('subkey : {0}'.format(subkeys))
             for subkey in subkeys:
-            #    print('{0} lines identified for element {1} with isotopic ID {2}'.format(len(lines[k][subkey]), k, subkey))
+                # print('{0} lines identified for element {1} with isotopic ID {2}'.format(len(lines[k][subkey]), k, subkey))
                 a, i = k.split(' ')
-                subheader = subkey + ' ' + i + ' ' + str(len(lines[k][subkey])) + '\n'
-             #   print('subheader : {0}'.format(subheader))
+                # format for the subheader is : '20X' 5f 10f
+                # The decimal dot of the ID should be at column 6, which means that there are 4 spaces left before, which allows for ID like 1212.019016, should we have Mg2
+                dot = subkey.index('.')
+                IDL, IDR = subkey.split('.')
+                stringID = '{{0: >{0}}}'.format(6-dot+1).format(IDL)+'.'+'{{0: <{0}}}'.format(22-7).format(IDR)
+                subheader = "'" + stringID + "'" + ' ' + i + ' ' + str(len(lines[k][subkey])) + '\n'
+            # print('subheader : {0}'.format(subheader))
                 bfile.write(subheader)
                 try:
-                    element = a + ' ' + to_roman[i] + '\n'
+                    elt = a + ' ' + to_roman[i]
+                    element = "'" + '{{0:<{0}}}'.format(7).format(elt) + "´" + '\n'
                     # print('element : {0}'.format(element))
                     bfile.write(element)
                 except KeyError:
