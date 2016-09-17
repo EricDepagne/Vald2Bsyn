@@ -63,7 +63,9 @@ gamma = {'1': {
 from_roman = {
         'I':    '1',
         'II':   '2',
-        'III':  '3'
+        'III':  '3',
+        'IV':   '4',
+        'V':    '5'
             }
 to_roman = {
         '1':    'I',
@@ -73,7 +75,7 @@ to_roman = {
         '5':    'V'
         }
 
-
+Max_ion = 3
 def vald2bsyn():
     # First, we read the VALD file.
     valddata = readvald(arguments.valdfile)
@@ -114,7 +116,7 @@ def writebsynfile(lines, bsynfile):
                 bfile.write(subheader)
                 try:
                     elt = a + ' ' + to_roman[i]
-                    element = "'" + '{{0:<{0}}}'.format(7).format(elt) + "´" + '\n'
+                    element = "'" + '{{0:<{0}}}'.format(7).format(elt) + "'" + '\n'
                     # print('element : {0}'.format(element))
                     bfile.write(element)
                 except KeyError:
@@ -168,6 +170,10 @@ def identify(data):
         ID, ionisation_stage = build_identification(compound, elements)
 
         # print('compounds : {0} '.format(compound))
+        print('ionisation : {0}'.format(ionisation_stage))
+        if np.float(ionisation_stage) >= Max_ion:
+            print('Ionisation stage greater than {0}'.format(Max_ion))
+            next
         if vdw == 0:
             # Van der Waals damping not provided by VALD. We'll use default values.
             # The elements are either isotopes or compounds.
@@ -175,15 +181,16 @@ def identify(data):
             vdw = 2.5
             atom = compound.split(' ')[0]
             if atom in periodic_table:
+                # print('Atome : {0}, ionisation : {1}'.format(atom, ionisation_stage))
                 # We only modify ionisation stage 1 and 2 and for a few atoms.
-                if np.float(ionisation_stage) < 3:
+                # if np.float(ionisation_stage) < 3:
                     # print('données : {0} is : {1}'.format(gamma[str(ionisation_stage)], atom))
-                    try:
-                        # print('gamma : {0} {1} {2}'.format(vdw, ionisation_stage, atom))
-                        vdw = gamma[str(ionisation_stage)][str(atom)]
-                    except KeyError:
-                        pass
-                        # print('no key')
+                try:
+                    # print('gamma : {0} {1} {2}'.format(vdw, ionisation_stage, atom))
+                    vdw = gamma[str(ionisation_stage)][str(atom)]
+                except KeyError:
+                    pass
+                    # print('no key')
         if gamrad > 3.0:
             gamrad = 10**gamrad
         else:
@@ -193,21 +200,6 @@ def identify(data):
         vdw = "{0:.3f}".format(vdw)
         elow = "{0:.3f}".format(elow)
         jup = "{0:7s}".format(str(2*jup+1))
-        # Replace the datastring by a dict that will contain all infos.
-# {linenumber : {wavelength,
-#                elow,
-#                loggf,
-#                vdw,
-#                jup,
-#                gamrad,
-#                lower,
-#                upper,
-#                eqw,
-#                eqwerr,
-#                compound,
-#                comment,
-#    }
-# }
 
         datastring = str(wavelength)+' ' + str(elow)+loggf+' '+str(vdw)+' '+str(jup)+' ' + str(gamrad) + ' ' + " '"+str(lowerorbital)+"'"+' '+"'"+str(upperorbital)+"' " + eqw + ' ' + eqwerr + ' ' + "'" + str(compound + ' ' + comment)
         if (compound not in result.keys()):
