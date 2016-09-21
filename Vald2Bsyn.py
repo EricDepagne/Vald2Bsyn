@@ -48,12 +48,13 @@ periodic_table = [
         'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th',
         'Pa', 'U']
 
-gamma = {'1': {
+gamma = {
+        '1': {
                 'Ca': 1.4,
                 'Sr': 1.8,
                 'Ba': 3.0,
             },
-         '2': {
+        '2': {
                 'Na': 2.0,
                 'Si': 1.3,
                 'Ca': 1.8,
