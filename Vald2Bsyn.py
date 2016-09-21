@@ -124,6 +124,9 @@ def writebsynfile(lines, bsynfile):
                     print('no key')
                     continue
                 for i in range(len(lines[k][subkey])):
+                    # We now write the atomica data to the file
+                    # They need a bit of tidying up, since BSyn requires a special format so they are read properly.
+                    print('données : {0}'.format(lines[k][subkey][i]))
                     bfile.write(lines[k][subkey][i])
                     bfile.write('\n')
                     # print(lines[k][subkey][i])
@@ -201,6 +204,7 @@ def identify(data):
         vdw = "{0:.3f}".format(vdw)
         elow = "{0:.3f}".format(elow)
         jup = "{0:7s}".format(str(2*jup+1))
+        #TODO : prepare the data here so they fit BSyn required format. 
 
         datastring = str(wavelength)+' ' + str(elow)+loggf+' '+str(vdw)+' '+str(jup)+' ' + str(gamrad) + ' ' + " '"+str(lowerorbital)+"'"+' '+"'"+str(upperorbital)+"' " + eqw + ' ' + eqwerr + ' ' + "'" + str(compound + ' ' + comment)
         if (compound not in result.keys()):
