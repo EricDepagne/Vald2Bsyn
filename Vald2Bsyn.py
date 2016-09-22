@@ -77,6 +77,8 @@ to_roman = {
         }
 
 Max_ion = 3
+
+
 def vald2bsyn():
     # First, we read the VALD file.
     valddata = readvald(arguments.valdfile)
@@ -112,7 +114,10 @@ def writebsynfile(lines, bsynfile):
                 dot = subkey.index('.')
                 IDL, IDR = subkey.split('.')
                 stringID = '{{0: >{0}}}'.format(6-dot+1).format(IDL)+'.'+'{{0: <{0}}}'.format(22-7).format(IDR)
-                subheader = "'" + stringID + "'" + ' ' + i + ' ' + str(len(lines[k][subkey])) + '\n'
+                ii = '{{:>{0}}}'.format(5).format(i)
+                nlines = len(lines[k][subkey])
+                nlines = '{{:>{0}}}'.format(10).format(nlines)
+                subheader = "'" + stringID + "'" + ii + nlines + '\n'
             # print('subheader : {0}'.format(subheader))
                 bfile.write(subheader)
                 try:
@@ -125,8 +130,7 @@ def writebsynfile(lines, bsynfile):
                     continue
                 for i in range(len(lines[k][subkey])):
                     # We now write the atomica data to the file
-                    # They need a bit of tidying up, since BSyn requires a special format so they are read properly.
-                    print('données : {0}'.format(lines[k][subkey][i]))
+                    # print('données : {0}'.format(lines[k][subkey][i]))
                     bfile.write(lines[k][subkey][i])
                     bfile.write('\n')
                     # print(lines[k][subkey][i])
@@ -199,14 +203,28 @@ def identify(data):
             gamrad = 10**gamrad
         else:
             gamrad = 10**5
+        # element = "'" + '{{0:<{0}}}'.format(7).format(elt) + "'" + '\n'
         wavelength = "{0:.3f}".format(wavelength)
-        gamrad = "{0:.2E}".format(gamrad)
-        vdw = "{0:.3f}".format(vdw)
+        wavelength = '{{0:>{0}}}'.format(10).format(wavelength)
         elow = "{0:.3f}".format(elow)
-        jup = "{0:7s}".format(str(2*jup+1))
-        #TODO : prepare the data here so they fit BSyn required format. 
+        elow = '{{:>{0}}}'.format(7).format(elow)
+        loggf = '{{:>{0}}}'.format(7).format(loggf.replace(' ', ''))
+        vdw = "{0:.3f}".format(vdw)
+        vdw = '{{:>{0}}}'.format(9).format(vdw)
+        jup = "{0:.1f}".format(2*jup+1)
+        jup = '{{:>{0}}}'.format(7).format(jup)
+        gamrad = "{0:.2E}".format(gamrad)
+        gamrad = '{{:>{0}}}'.format(10).format(gamrad)
+        lowerorbital = "'" + str(lowerorbital) + "'"
+        lowerorbital = '{{:>{0}}}'.format(4).format(lowerorbital)
+        upperorbital = "'" + str(upperorbital) + "'"
+        upperorbital = '{{:>{0}}}'.format(4).format(upperorbital)
+        print('{0}'.format(type(eqw)))
+        eqw = '{{:>{0}}}'.format(6).format(eqw.replace(' ', ''))
+        eqwerr = '{{:>{0}}}'.format(7).format(eqwerr.replace(' ', ''))
+        # TODO : prepare the data here so they fit BSyn required format.
 
-        datastring = str(wavelength)+' ' + str(elow)+loggf+' '+str(vdw)+' '+str(jup)+' ' + str(gamrad) + ' ' + " '"+str(lowerorbital)+"'"+' '+"'"+str(upperorbital)+"' " + eqw + ' ' + eqwerr + ' ' + "'" + str(compound + ' ' + comment)
+        datastring = wavelength + elow + loggf + vdw + jup + gamrad + lowerorbital + upperorbital + eqw + eqwerr + ' ' + "'" + str(compound + ' ' + comment)
         if (compound not in result.keys()):
             result[compound] = {}
         if (ID not in result[compound].keys()):
