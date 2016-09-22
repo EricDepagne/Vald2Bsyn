@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Python imports
-import sys
+# import sys
 import argparse
 import re
 
@@ -105,10 +105,12 @@ def writebsynfile(lines, bsynfile):
         for k in lines.keys():
             # print('elt: {0} has {1} isotopes'.format(k, len(lines[k])))
             subkeys = list(lines[k].keys())
+            a, i = k.split(' ')
+            if np.int(i) > Max_ion:
+                continue
             # print('subkey : {0}'.format(subkeys))
             for subkey in subkeys:
                 # print('{0} lines identified for element {1} with isotopic ID {2}'.format(len(lines[k][subkey]), k, subkey))
-                a, i = k.split(' ')
                 # format for the subheader is : '20X' 5f 10f
                 # The decimal dot of the ID should be at column 6, which means that there are 4 spaces left before, which allows for ID like 1212.019016, should we have Mg2
                 dot = subkey.index('.')
@@ -169,19 +171,22 @@ def identify(data):
             elements = isotopes.groups()
         # Now we get the elements involved. It's the first field before the comma in the first line.
         compound, wavelength, loggf, elow, jlow, eup, jup, lowerlevel, upperlevel, mean, gamrad, stark, vdw, *rest = lineinfo[0].split(',')
+        wavelength = np.float(wavelength)
+        loggf = np.float(loggf)
+        if loggf <= -10.0:
+            loggf = "{0:.2f}".format(loggf)
         jup = np.float(jup)
         vdw = np.float(vdw)
         gamrad = np.float(gamrad)
-        wavelength = np.float(wavelength)
         elow = np.float(elow)
         compound = compound.replace("'", "")
         ID, ionisation_stage = build_identification(compound, elements)
 
         # print('compounds : {0} '.format(compound))
-        print('ionisation : {0}'.format(ionisation_stage))
-        if np.float(ionisation_stage) >= Max_ion:
-            print('Ionisation stage greater than {0}'.format(Max_ion))
-            next
+        # print('ionisation : {0}'.format(ionisation_stage))
+        # if np.float(ionisation_stage) >= Max_ion:
+        #    print('Ionisation stage greater than {0}'.format(Max_ion))
+        #    next
         if vdw == 0:
             # Van der Waals damping not provided by VALD. We'll use default values.
             # The elements are either isotopes or compounds.
@@ -208,6 +213,7 @@ def identify(data):
         wavelength = '{{0:>{0}}}'.format(10).format(wavelength)
         elow = "{0:.3f}".format(elow)
         elow = '{{:>{0}}}'.format(7).format(elow)
+        loggf = str(loggf)
         loggf = '{{:>{0}}}'.format(7).format(loggf.replace(' ', ''))
         vdw = "{0:.3f}".format(vdw)
         vdw = '{{:>{0}}}'.format(9).format(vdw)
@@ -219,7 +225,6 @@ def identify(data):
         lowerorbital = '{{:>{0}}}'.format(4).format(lowerorbital)
         upperorbital = "'" + str(upperorbital) + "'"
         upperorbital = '{{:>{0}}}'.format(4).format(upperorbital)
-        print('{0}'.format(type(eqw)))
         eqw = '{{:>{0}}}'.format(6).format(eqw.replace(' ', ''))
         eqwerr = '{{:>{0}}}'.format(7).format(eqwerr.replace(' ', ''))
         # TODO : prepare the data here so they fit BSyn required format.
