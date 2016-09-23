@@ -35,7 +35,6 @@ second_ionisation_potential = [
         16.20, 17.70, 16.60, 17.50, 20.00, 18.56, 20.50, 18.76, 20.43,
         15.03, 16.68, 19.00, 20.00, 21.00, 22.00, 10.14, 12.10, 11.50,
         99.99, 12.00]
-
 periodic_table = [
         'H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
         'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca',
@@ -47,7 +46,6 @@ periodic_table = [
         'Lu', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg',
         'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th',
         'Pa', 'U']
-
 gamma = {
         '1': {
                 'Ca': 1.4,
@@ -105,8 +103,11 @@ def writebsynfile(lines, bsynfile):
         for k in lines.keys():
             # print('elt: {0} has {1} isotopes'.format(k, len(lines[k])))
             subkeys = list(lines[k].keys())
+            print('subkeys :{0}'.format(subkeys))
+            print('k : {0}'.format(k))
             a, i = k.split(' ')
             if np.int(i) > Max_ion:
+                print('Ion > {0} {1} {2} {3}'.format(Max_ion, k, a, i))
                 continue
             # print('subkey : {0}'.format(subkeys))
             for subkey in subkeys:
@@ -120,6 +121,7 @@ def writebsynfile(lines, bsynfile):
                 nlines = len(lines[k][subkey])
                 nlines = '{{:>{0}}}'.format(10).format(nlines)
                 subheader = "'" + stringID + "'" + ii + nlines + '\n'
+                print('stringID : {0}'.format(subheader))
             # print('subheader : {0}'.format(subheader))
                 bfile.write(subheader)
                 try:
@@ -130,10 +132,10 @@ def writebsynfile(lines, bsynfile):
                 except KeyError:
                     print('no key')
                     continue
-                for i in range(len(lines[k][subkey])):
+                for index in range(len(lines[k][subkey])):
                     # We now write the atomica data to the file
-                    # print('données : {0}'.format(lines[k][subkey][i]))
-                    bfile.write(lines[k][subkey][i])
+                    print('données : {0}'.format(lines[k][subkey][index]))
+                    bfile.write(lines[k][subkey][index])
                     bfile.write('\n')
                     # print(lines[k][subkey][i])
 
@@ -355,11 +357,14 @@ def build_identification(compound, elements):
 def get_orbital(configuration):
     orbits = 'spdfghklm'
     # print('Get_Orbital: {0}'.format(configuration))
-    if 'None' in configuration:
-        return 'X'
+    #if 'None' in configuration:
+    #    return 'X'
     for c in configuration[::-1]:
-        if c.islower() and c in orbits:
+        c = c.lower()
+        if c in orbits:
             return c
+        else:
+            return 'X'
 
 
 def identify_levels(info):
