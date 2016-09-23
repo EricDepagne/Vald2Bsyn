@@ -353,15 +353,15 @@ def build_identification(compound, elements):
 
 def get_orbital(configuration):
     orbits = 'spdfghklm'
-    # print('Get_Orbital: {0}'.format(configuration))
-    #if 'None' in configuration:
-    #    return 'X'
-    for c in configuration[::-1]:
-        c = c.lower()
-        if c in orbits:
-            return c
-        else:
-            return 'X'
+    structure = configuration.split('.')
+    orb = 'X'
+    for orbital in structure[::-1]:
+        if '(' in orbital:
+            continue
+        if orbital[-1] in orbits:
+            orb = orbital[-1]
+            return orb
+    return orb
 
 
 def identify_levels(info):
@@ -372,8 +372,6 @@ def identify_levels(info):
 
     # print('info: {0}\n{1}'.format(lower_level_atomic_info, upper_level_atomic_info))
     # We extract the orbitals from the atomic configuration.
-    # print(lower_level_atomic_info)
-    # print(upper_level_atomic_info)
     if 'Hb' in upper_level_atomic_info:
         upper_orbital = 'X'
     else:
