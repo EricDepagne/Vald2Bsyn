@@ -103,8 +103,6 @@ def writebsynfile(lines, bsynfile):
         for k in lines.keys():
             # print('elt: {0} has {1} isotopes'.format(k, len(lines[k])))
             subkeys = list(lines[k].keys())
-            print('subkeys :{0}'.format(subkeys))
-            print('k : {0}'.format(k))
             a, i = k.split(' ')
             if np.int(i) > Max_ion:
                 print('Ion > {0} {1} {2} {3}'.format(Max_ion, k, a, i))
@@ -121,7 +119,6 @@ def writebsynfile(lines, bsynfile):
                 nlines = len(lines[k][subkey])
                 nlines = '{{:>{0}}}'.format(10).format(nlines)
                 subheader = "'" + stringID + "'" + ii + nlines + '\n'
-                print('stringID : {0}'.format(subheader))
             # print('subheader : {0}'.format(subheader))
                 bfile.write(subheader)
                 try:
@@ -134,7 +131,7 @@ def writebsynfile(lines, bsynfile):
                     continue
                 for index in range(len(lines[k][subkey])):
                     # We now write the atomica data to the file
-                    print('données : {0}'.format(lines[k][subkey][index]))
+                    # print('données : {0}'.format(lines[k][subkey][index]))
                     bfile.write(lines[k][subkey][index])
                     bfile.write('\n')
                     # print(lines[k][subkey][i])
