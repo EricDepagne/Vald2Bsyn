@@ -89,10 +89,6 @@ def writebsynfile(lines, bsynfile):
     atomicnumber = []
     for k in lines.keys():
         atomicnumber.append(list(lines[k].keys())[0])
-    # We want to sort the list, so we convert the items to floats, sort them, and rewrite them as string while keeping the format
-    temp = [np.float(x) for x in atomicnumber]  # Convert items to floats
-    temp.sort()  # sort the floats
-    atomicnumber = [str(x).replace('.0', '.000') if str(x).endswith('0') else str(x) for x in temp]  # Rewrite the floats so that they have either 3 trailing zeros or the normal format
 
     with open(bsynfile, 'w') as bfile:
         for k in lines.keys():
@@ -161,12 +157,19 @@ def identify(data):
         loggf = np.float(loggf)
         if loggf <= -10.0:
             loggf = "{0:.2f}".format(loggf)
+        else:
+            loggf = "{0:.3f}".format(loggf)
+        elow = np.float(elow)
         jup = np.float(jup)
         vdw = np.float(vdw)
         gamrad = np.float(gamrad)
         elow = np.float(elow)
         compound = compound.replace("'", "")
         ID, ionisation_stage = build_identification(compound, elements)
+
+        if elow >= 15:
+            # We skip lines with lower level chiex greater than 15 eV
+            continue
 
         if vdw == 0:
             # Van der Waals damping not provided by VALD. We'll use default values.
