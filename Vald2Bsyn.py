@@ -73,8 +73,11 @@ to_roman = {
         '4':    'IV',
         '5':    'V'
         }
-
-Max_ion = 3
+# Some constant that are used to filter out lines
+# Maximum ionisation state that will be considered
+Max_ion = 2
+# Maximum excitation potential of the lower level
+ChiexLowerMax = 15
 
 
 def vald2bsyn():
@@ -94,8 +97,7 @@ def writebsynfile(lines, bsynfile):
         for k in lines.keys():
             subkeys = list(lines[k].keys())
             a, i = k.split(' ')
-            if np.int(i) >= Max_ion:
-                print('Ion > {0} {1} {2} {3}'.format(Max_ion, k, a, i))
+            if np.int(i) > Max_ion:
                 continue
             for subkey in subkeys:
                 # format for the subheader is : '20X' 5f 10f
@@ -152,7 +154,7 @@ def identify(data):
         if isotopes:
             elements = isotopes.groups()
         # Now we get the elements involved. It's the first field before the comma in the first line.
-        compound, wavelength, loggf, elow, jlow, eup, jup, lowerlevel, upperlevel, mean, gamrad, stark, vdw, *rest = lineinfo[0].split(',')
+        compound, wavelength, loggf, chiexlower, jlow, chiexupper, jup, lowerlevel, upperlevel, mean, gamrad, stark, vdw, *rest = lineinfo[0].split(',')
         wavelength = np.float(wavelength)
         atom = compound.split(' ')[0].replace("'", '')
         loggf = np.float(loggf)
@@ -160,22 +162,21 @@ def identify(data):
             loggf = "{0:.2f}".format(loggf)
         else:
             loggf = "{0:.3f}".format(loggf)
-        elow = np.float(elow)
+        chiexlower = np.float(chiexlower)
         jup = np.float(jup)
         vdw = np.float(vdw)
         gamrad = np.float(gamrad)
-        elow = np.float(elow)
-        eup = np.float(eup)
+        chiexlower = np.float(chiexlower)
+        chiexupper = np.float(chiexupper)
         compound = compound.replace("'", "")
         ID, ionisation_stage = build_identification(compound, elements)
         # print('ion : {0} type : {1}'.format(ionisation_stage, type(ionisation_stage)))
-        if (eup > first_ionisation_potential[periodic_table.index(atom)]) and (ionisation_stage == '1'):
-            print('skipping bound-free transition')
-            continue
-        if eup > second_ionisation_potential[periodic_table.index(atom)]:
-            print('skipping bound-free transition')
-            continue
-        if elow >= 15:
+        print('compound : {0}'.format(atom))
+        if atom in periodic_table:
+            if ((chiexupper > first_ionisation_potential[periodic_table.index(atom)]) and (ionisation_stage == '1')) or (chiexupper > second_ionisation_potential[periodic_table.index(atom)]):
+                print('skipping bound-free transition')
+                continue
+        if chiexlower >= ChiexLowerMax:
             # We skip lines with lower level chiex greater than 15 eV
             continue
 
@@ -197,8 +198,8 @@ def identify(data):
             gamrad = 10**5
         wavelength = "{0:.3f}".format(wavelength)
         wavelength = '{0:>10}'.format(wavelength)
-        elow = "{0:.3f}".format(elow)
-        elow = '{:>7}'.format(elow)
+        chiexlower = "{0:.3f}".format(chiexlower)
+        chiexlower = '{:>7}'.format(chiexlower)
         loggf = str(loggf)
         loggf = '{:>7}'.format(loggf.replace(' ', ''))
         vdw = "{0:.3f}".format(vdw)
@@ -214,7 +215,7 @@ def identify(data):
         eqw = '{:>6}'.format(eqw.replace(' ', ''))
         eqwerr = '{:>7}'.format(eqwerr.replace(' ', ''))
 
-        datastring = wavelength + elow + loggf + vdw + jup + gamrad + lowerorbital + upperorbital + eqw + eqwerr + ' ' + "'" + str(compound + ' ' + comment)
+        datastring = wavelength + chiexlower + loggf + vdw + jup + gamrad + lowerorbital + upperorbital + eqw + eqwerr + ' ' + "'" + str(compound + ' ' + comment)
         if (compound not in result.keys()):
             result[compound] = {}
         if (ID not in result[compound].keys()):
