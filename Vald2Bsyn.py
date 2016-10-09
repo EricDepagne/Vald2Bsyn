@@ -170,11 +170,10 @@ def identify(data):
         ID, ionisation_stage = build_identification(compound, elements)
         # print('ion : {0} type : {1}'.format(ionisation_stage, type(ionisation_stage)))
         if (eup > first_ionisation_potential[periodic_table.index(atom)]) and (ionisation_stage == '1'):
-            print('Atome : {0} ionisation : {1}, chiu : {2} wavelength {3}'.format(atom, first_ionisation_potential[periodic_table.index(atom)+1], eup, wavelength))
             print('skipping bound-free transition')
             continue
         if eup > second_ionisation_potential[periodic_table.index(atom)]:
-            print('ski ipping bound-free transition')
+            print('skipping bound-free transition')
             continue
         if elow >= 15:
             # We skip lines with lower level chiex greater than 15 eV
