@@ -94,7 +94,7 @@ def writebsynfile(lines, bsynfile):
         for k in lines.keys():
             subkeys = list(lines[k].keys())
             a, i = k.split(' ')
-            if np.int(i) > Max_ion:
+            if np.int(i) >= Max_ion:
                 print('Ion > {0} {1} {2} {3}'.format(Max_ion, k, a, i))
                 continue
             for subkey in subkeys:
@@ -154,6 +154,7 @@ def identify(data):
         # Now we get the elements involved. It's the first field before the comma in the first line.
         compound, wavelength, loggf, elow, jlow, eup, jup, lowerlevel, upperlevel, mean, gamrad, stark, vdw, *rest = lineinfo[0].split(',')
         wavelength = np.float(wavelength)
+        atom = compound.split(' ')[0].replace("'", '')
         loggf = np.float(loggf)
         if loggf <= -10.0:
             loggf = "{0:.2f}".format(loggf)
@@ -164,9 +165,17 @@ def identify(data):
         vdw = np.float(vdw)
         gamrad = np.float(gamrad)
         elow = np.float(elow)
+        eup = np.float(eup)
         compound = compound.replace("'", "")
         ID, ionisation_stage = build_identification(compound, elements)
-
+        # print('ion : {0} type : {1}'.format(ionisation_stage, type(ionisation_stage)))
+        if (eup > first_ionisation_potential[periodic_table.index(atom)]) and (ionisation_stage == '1'):
+            print('Atome : {0} ionisation : {1}, chiu : {2} wavelength {3}'.format(atom, first_ionisation_potential[periodic_table.index(atom)+1], eup, wavelength))
+            print('skipping bound-free transition')
+            continue
+        if eup > second_ionisation_potential[periodic_table.index(atom)]:
+            print('ski ipping bound-free transition')
+            continue
         if elow >= 15:
             # We skip lines with lower level chiex greater than 15 eV
             continue
@@ -188,23 +197,23 @@ def identify(data):
         else:
             gamrad = 10**5
         wavelength = "{0:.3f}".format(wavelength)
-        wavelength = '{{0:>{0}}}'.format(10).format(wavelength)
+        wavelength = '{0:>10}'.format(wavelength)
         elow = "{0:.3f}".format(elow)
-        elow = '{{:>{0}}}'.format(7).format(elow)
+        elow = '{:>7}'.format(elow)
         loggf = str(loggf)
-        loggf = '{{:>{0}}}'.format(7).format(loggf.replace(' ', ''))
+        loggf = '{:>7}'.format(loggf.replace(' ', ''))
         vdw = "{0:.3f}".format(vdw)
-        vdw = '{{:>{0}}}'.format(9).format(vdw)
+        vdw = '{:>9}'.format(vdw)
         jup = "{0:.1f}".format(2*jup+1)
-        jup = '{{:>{0}}}'.format(7).format(jup)
+        jup = '{:>7}'.format(jup)
         gamrad = "{0:.2E}".format(gamrad)
-        gamrad = '{{:>{0}}}'.format(10).format(gamrad)
+        gamrad = '{:>10}'.format(gamrad)
         lowerorbital = "'" + str(lowerorbital) + "'"
-        lowerorbital = '{{:>{0}}}'.format(4).format(lowerorbital)
+        lowerorbital = '{:>4}'.format(lowerorbital)
         upperorbital = "'" + str(upperorbital) + "'"
-        upperorbital = '{{:>{0}}}'.format(4).format(upperorbital)
-        eqw = '{{:>{0}}}'.format(6).format(eqw.replace(' ', ''))
-        eqwerr = '{{:>{0}}}'.format(7).format(eqwerr.replace(' ', ''))
+        upperorbital = '{:>4}'.format(upperorbital)
+        eqw = '{:>6}'.format(eqw.replace(' ', ''))
+        eqwerr = '{:>7}'.format(eqwerr.replace(' ', ''))
 
         datastring = wavelength + elow + loggf + vdw + jup + gamrad + lowerorbital + upperorbital + eqw + eqwerr + ' ' + "'" + str(compound + ' ' + comment)
         if (compound not in result.keys()):
