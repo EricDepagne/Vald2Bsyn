@@ -82,13 +82,14 @@ ChiexLowerMax = 15
 
 def vald2bsyn():
     # First, we read the VALD file.
+    print('Reading input file : {valdfile}'.format(valdfile=arguments.valdfile))
     valddata = readvald(arguments.valdfile)
     identifiedlines = identify(valddata)
     writebsynfile(identifiedlines, arguments.bsynfile)
 
 
 def writebsynfile(lines, bsynfile):
-    print('Writing data to BSyn file : {0}'.format(bsynfile))
+    print('Writing data to BSyn file : {bsynfile}'.format(bsynfile=bsynfile))
     atomicnumber = []
     for k in lines.keys():
         atomicnumber.append(list(lines[k].keys())[0])
@@ -104,10 +105,10 @@ def writebsynfile(lines, bsynfile):
                 # The decimal dot of the ID should be at column 6, which means that there are 4 spaces left before, which allows for ID like 1212.019016, should we have Mg2
                 dot = subkey.index('.')
                 IDL, IDR = subkey.split('.')
-                stringID = '{{0: >{0}}}'.format(6-dot+1).format(IDL)+'.'+'{{0: <{0}}}'.format(22-7).format(IDR)
+                stringID = '{{0: >{0}}}'.format(6-dot+1).format(IDL)+'.'+'{0: <15}'.format(IDR)
                 ii = '{{:>{0}}}'.format(5).format(i)
                 nlines = len(lines[k][subkey])
-                nlines = '{{:>{0}}}'.format(10).format(nlines)
+                nlines = '{:>10}'.format(nlines)
                 subheader = "'" + stringID + "'" + ii + nlines + '\n'
                 bfile.write(subheader)
                 try:
@@ -170,11 +171,8 @@ def identify(data):
         chiexupper = np.float(chiexupper)
         compound = compound.replace("'", "")
         ID, ionisation_stage = build_identification(compound, elements)
-        # print('ion : {0} type : {1}'.format(ionisation_stage, type(ionisation_stage)))
-        print('compound : {0}'.format(atom))
         if atom in periodic_table:
             if ((chiexupper > first_ionisation_potential[periodic_table.index(atom)]) and (ionisation_stage == '1')) or (chiexupper > second_ionisation_potential[periodic_table.index(atom)]):
-                print('skipping bound-free transition')
                 continue
         if chiexlower >= ChiexLowerMax:
             # We skip lines with lower level chiex greater than 15 eV
@@ -331,15 +329,19 @@ def build_identification(compound, elements):
 
 
 def get_orbital(configuration):
-    orbits = 'spdfghklm'
     structure = configuration.split('.')
     orb = 'X'
     for orbital in structure[::-1]:
+        index = -1
         if '(' in orbital:
             continue
-        if orbital[-1] in orbits:
-            orb = orbital[-1]
-            return orb
+        try:
+            np.int(orbital[-1])
+            index -= 1
+        except ValueError:
+            pass
+        orb = orbital[index]
+        return orb
     return orb
 
 
